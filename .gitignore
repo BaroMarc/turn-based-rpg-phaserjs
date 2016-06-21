@@ -1,2 +1,8 @@
 node_modules/
 dist/
+src/
+.babelrc
+package.json
+README.md
+webpack.config.js
+webpack.production.config.js
