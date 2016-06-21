@@ -22,4 +22,10 @@ This project uses ES2015 syntax, transpiled by [Babel](https://babeljs.io/) and 
 1. Run `npm start deploy`
 2. Deploy the folders **dist**, **assets** and the file **index.html** to your server of choice
 
+### Assets copyright
+
+The monsters assets used in this game are available in http://opengameart.org/content/2d-rpg-enemy-set and were created by the following artists: Brett Steele (Safir-Kreuz), Joe Raucci (Sylon), Vicki Beinhart (Namakoro), Tyler Olsen (Roots).
+
+The characters assets are available in http://opengameart.org/content/24×32-characters-with-faces-big-pack and were created by Svetlana Kushnariova (email: lana-chan@yandex.ru). All assets are available through the Creative Commons license.
+
 [Live demo!](https://cussomarc.github.io/turn-based-rpg-phaserjs/)
