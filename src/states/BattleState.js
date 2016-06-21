@@ -9,6 +9,12 @@ import EnemyMenuItem from '../prefabs/hud/EnemyMenuItem';
 import Menu from '../prefabs/hud/Menu';
 import AttackMenuItem from '../prefabs/hud/AttackMenuItem';
 
+import forIn from 'lodash/forIn';
+import map from 'lodash/map';
+import reduce from 'lodash/reduce';
+import assign from 'lodash/assign';
+import concat from 'lodash/concat';
+
 export default class extends Phaser.State {
 
     constructor() {
@@ -21,7 +27,7 @@ export default class extends Phaser.State {
             enemy_unit: EnemyUnit
         };
         
-        this.TEXT_STYLE = {font: "14px Arial", fill: "#FFFFFF"};
+        this.TEXT_STYLE = {font: '14px Arial', fill: '#FFFFFF'};
     }
 
     init(levelData) {
@@ -34,28 +40,21 @@ export default class extends Phaser.State {
     }
      
     create() {
+        const self = this;
 
+        this.prefabs = [];
         // create groups
-        this.groups = {};
-        this.levelData.groups.forEach(function (groupName) {
-            this.groups[groupName] = this.game.add.group();
-        }, this);
+        this.groups = reduce(this.levelData.groups, (groups, groupName) => assign(groups, { [groupName]: self.game.add.group() }), {});
         
         // create prefabs
-        this.prefabs = {};
-        for (let prefabName in this.levelData.prefabs) {
-            if (this.levelData.prefabs.hasOwnProperty(prefabName)) {
-                // create prefab
-                this.createPrefab(prefabName, this.levelData.prefabs[prefabName]);
-            }
-        }
+        forIn(this.levelData.prefabs, (prefab, prefabName) => {
+            self.createPrefab(prefabName, prefab);
+        });
     
         this.initHud();
         
         // create units array with player and enemy units
-        this.units = [];
-        this.units = this.units.concat(this.groups.player_units.children);
-        this.units = this.units.concat(this.groups.enemy_units.children);
+        this.units = concat(this.groups.player_units.children, this.groups.enemy_units.children);
         
         this.nextTurn();
     }
@@ -75,38 +74,56 @@ export default class extends Phaser.State {
         this.showPlayerActions({x: 106, y: 210});
         
         // show player units
-        this.showUnits("player_units", {x: 202, y: 210}, PlayerMenuItem);
+        this.showUnits('player_units', {x: 202, y: 210}, PlayerMenuItem);
         
         // show enemy units
-        this.showUnits("enemy_units", {x: 10, y: 210}, EnemyMenuItem);
+        this.showUnits('enemy_units', {x: 10, y: 210}, EnemyMenuItem);
     }
 
     showUnits(groupName, position, menuItemClass) {
 
-        // create units menu items, TODO: refactor with array.map
-        let unitIndex = 0;
-        const menuItems = [];
-        this.groups[groupName].forEach(function (unit) {
-            const unitMenuItem = new menuItemClass(this, unit.name + "_menu_item", {x: position.x, y: position.y + unitIndex * 20}, {group: "hud", text: unit.name, style: Object.create(this.TEXT_STYLE)});
-            unitIndex += 1;
-            menuItems.push(unitMenuItem);
-        }, this);
+        // create units menu items
+        const self = this;
+
+        const menuItems = map(this.groups[groupName].children, (unit, unitIndex) => {
+            return new menuItemClass(self,
+                `${unit.name}_menu_item`,
+                {
+                    x: position.x,
+                    y: position.y + unitIndex * 20
+                }, {
+                    group: 'hud',
+                    text: unit.name,
+                    style: Object.create(self.TEXT_STYLE)
+                }); 
+        });
+
         // create units menu
-        var unitsMenu = new Menu(this, groupName + "_menu", position, {group: "hud", menuItems});
+        new Menu(this, `${groupName}_menu`, position, {group: 'hud', menuItems});
     }
 
     showPlayerActions(position) {
 
+        const self = this;
+
         // available actions
-        const actions = [{text: "Attack", class: AttackMenuItem}];
-        const menuItems = [];
-        let actionIndex = 0;
+        const actions = [{text: 'Attack', class: AttackMenuItem}];
+
         // create a menu item for each action
-        actions.forEach(function (action) {
-            menuItems.push(new action.class(this, action.text + "_menu_item", {x: position.x, y: position.y + actionIndex * 20}, {group: "hud", text: action.text, style: Object.create(this.TEXT_STYLE)}));
-            actionIndex += 1;
-        }, this);
-        var actionsMenu = new Menu(this, "actions_menu", position, {group: "hud", menuItems});
+        const menuItems = map(actions, (action, actionIndex) => {
+            return new action.class(self,
+                `${action.text}_menu_item`,
+                {
+                    x: position.x,
+                    y: position.y + actionIndex * 20
+                }, {
+                    group: 'hud',
+                    text: action.text,
+                    style: Object.create(self.TEXT_STYLE)
+                });
+        });
+        
+        new Menu(this, 'actions_menu', position, {group: 'hud', menuItems});
     }
 
     nextTurn() {
