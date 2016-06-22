@@ -14,6 +14,7 @@ import map from 'lodash/map';
 import reduce from 'lodash/reduce';
 import assign from 'lodash/assign';
 import concat from 'lodash/concat';
+import PriorityQueue from 'js-priority-queue';
 
 export default class extends Phaser.State {
 
@@ -30,9 +31,11 @@ export default class extends Phaser.State {
         this.TEXT_STYLE = {font: '14px Arial', fill: '#FFFFFF'};
     }
 
-    init(levelData) {
+    init(levelData, extraParameters) {
 
         this.levelData = levelData;
+        this.enemyData = extraParameters.enemyData;
+        this.partyData = extraParameters.partyData;
         
         this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         this.scale.pageAlignHorizontally = true;
@@ -41,20 +44,52 @@ export default class extends Phaser.State {
      
     create() {
         const self = this;
-
-        this.prefabs = [];
+    
         // create groups
-        this.groups = reduce(this.levelData.groups, (groups, groupName) => assign(groups, { [groupName]: self.game.add.group() }), {});
+        this.groups = {};
+        this.levelData.groups.forEach(function (groupName) {
+            this.groups[groupName] = this.game.add.group();
+        }, this);
         
         // create prefabs
-        forIn(this.levelData.prefabs, (prefab, prefabName) => {
-            self.createPrefab(prefabName, prefab);
-        });
-    
+        this.prefabs = {};
+        for (let prefabName in this.levelData.prefabs) {
+            if (this.levelData.prefabs.hasOwnProperty(prefabName)) {
+                // create prefab
+                this.createPrefab(prefabName, this.levelData.prefabs[prefabName]);
+            }
+        }
+        
+        // create enemy units
+        for (let enemyUnitName in this.enemyData) {
+            if (this.enemyData.hasOwnProperty(enemyUnitName)) {
+                // create enemy units
+                this.createPrefab(enemyUnitName, this.enemyData[enemyUnitName]);
+            }
+        }
+        
+        // create player units
+        for (let playerUnitName in this.partyData) {
+            if (this.partyData.hasOwnProperty(playerUnitName)) {
+                // create player units
+                this.createPrefab(playerUnitName, this.partyData[playerUnitName]);
+            }
+        }
+        
         this.initHud();
         
-        // create units array with player and enemy units
-        this.units = concat(this.groups.player_units.children, this.groups.enemy_units.children);
+        // store units in a priority queue which compares the units act turn
+        this.units = new PriorityQueue({comparator: function (firstUnit, secondUnit) {
+            return firstUnit.actTurn - secondUnit.actTurn;
+        }});
+        this.groups.player_units.forEach(function (unit) {
+            unit.calculateActTurn(0);
+            this.units.queue(unit);
+        }, this);
+        this.groups.enemy_units.forEach(function (unit) {
+            unit.calculateActTurn(0);
+            this.units.queue(unit);
+        }, this);
         
         this.nextTurn();
     }
@@ -122,20 +157,47 @@ export default class extends Phaser.State {
                     style: Object.create(self.TEXT_STYLE)
                 });
         });
-        
+
         new Menu(this, 'actions_menu', position, {group: 'hud', menuItems});
     }
 
     nextTurn() {
 
+        // if all enemy units are dead, go back to the world state
+        if (this.groups.enemy_units.countLiving() === 0) {
+            this.endBattle();
+        }
+        
+        // if all player units are dead, restart the game
+        if (this.groups.player_units.countLiving() === 0) {
+            this.gameOver();
+        }
+
         // takes the next unit
-        this.currentUnit = this.units.shift();
+        this.currentUnit = this.units.dequeue();
         // if the unit is alive, it acts, otherwise goes to the next turn
         if (this.currentUnit.alive) {
             this.currentUnit.act();
-            this.units.push(this.currentUnit);
+            this.currentUnit.calculateActTurn(this.currentUnit.actTurn);
+            this.units.queue(this.currentUnit);
         } else {
             this.nextTurn();
         }
     }
+
+    gameOver() {
+
+        // go back to WorldState restarting the player position
+        this.game.state.start("BootState", true, false, "assets/levels/level1.json", "WorldState", {restart_position: true});
+    };
+
+    endBattle() {
+
+        // save current party health
+        this.groups.player_units.forEach(function (unit) {
+            this.partyData[unit.name].properties.stats = unit.stats;
+        }, this);
+        // go back to WorldState with the current party data
+        this.game.state.start("BootState", true, false, "assets/levels/level1.json", "WorldState", {partyData: this.partyData});
+    };
 }

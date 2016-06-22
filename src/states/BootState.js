@@ -2,9 +2,10 @@ import 'phaser';
 
 export default class extends Phaser.State {
 
-    init(levelFile, nextState) {
+    init(levelFile, nextState, extraParameters) {
         this.levelFile = levelFile;
         this.nextState = nextState;
+        this.extraParameters = extraParameters;
     }
  
     preload() {
@@ -14,6 +15,6 @@ export default class extends Phaser.State {
     create() {
         const levelText = this.game.cache.getText("level1");
         const levelData = JSON.parse(levelText);
-        this.game.state.start("LoadingState", true, false, levelData, this.nextState);
+        this.game.state.start("LoadingState", true, false, levelData, this.nextState, this.extraParameters);
     }  
 }

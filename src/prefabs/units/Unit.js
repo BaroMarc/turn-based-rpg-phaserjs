@@ -15,6 +15,8 @@ export default class extends Prefab {
         this.attacked_animation = this.gameState.game.add.tween(this);
         this.attacked_animation.to({tint: 0xFF0000}, 200);
         this.attacked_animation.onComplete.add(this.restoreTint, this);
+
+        this.actTurn = 0;
     }
 
     receiveDamage(damage) {
@@ -45,5 +47,11 @@ export default class extends Prefab {
         const actionMessagePosition = new Phaser.Point(this.gameState.game.world.width / 2, this.gameState.game.world.height * 0.1);
         const actionMessageText = `${this.name} attacks ${target.name} for ${damage} damage`;
         attackMessage = new ActionMessage(this.gameState, this.name + "_action_message", actionMessagePosition, {group: "hud", texture: "rectangle_image", scale: {x: 0.75, y: 0.2}, duration: 1, message: actionMessageText});
+    }
+
+    calculateActTurn(currentTurn) {
+        
+        // calculate the act turn based on the unit speed
+        this.actTurn = currentTurn + Math.ceil(100 / this.stats.speed);
     }
 }

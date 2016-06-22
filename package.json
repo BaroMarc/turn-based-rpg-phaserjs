@@ -21,6 +21,7 @@
     "webpack": "^1.12.13"
   },
   "dependencies": {
+    "js-priority-queue": "^0.1.5",
     "lodash": "^4.13.1",
     "phaser": "^2.4.7"
   },

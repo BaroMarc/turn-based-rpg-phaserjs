@@ -4,10 +4,11 @@ import forIn from 'lodash/forIn';
 
 export default class extends Phaser.State {
       
-   init(levelData, nextState) {
+   init(levelData, nextState, extraParameters) {
 
         this.levelData = levelData;
         this.nextState = nextState;
+        this.extraParameters = extraParameters;
     }
      
     preload() {
@@ -31,6 +32,6 @@ export default class extends Phaser.State {
      
     create() {
 
-        this.game.state.start(this.nextState, true, false, this.levelData);
+        this.game.state.start(this.nextState, true, false, this.levelData, this.extraParameters);
     }
 }
