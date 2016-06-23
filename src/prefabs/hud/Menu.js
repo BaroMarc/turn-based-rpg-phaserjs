@@ -80,4 +80,18 @@ export default class extends Prefab {
         }
         this.currentItemIndex = 0;
     }
+
+    show() {
+
+        this.menuItems.forEach((item) => {
+            item.visible = true;
+        }, this);
+    };
+
+    hide() {
+
+        this.menuItems.forEach((item) => {
+            item.visible = false;
+        }, this);
+    };
 }

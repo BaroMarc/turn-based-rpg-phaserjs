@@ -45,10 +45,14 @@ export default class extends Phaser.State {
                     "group": "player_units",
                     "frame": 10,
                     "stats": {
-                        "attack": 15,
+                        "attack": 20,
+                        "magic_attack": 5,
                         "defense": 5,
                         "health": 100,
-                        "speed": 15
+                        "mana": 100,
+                        "speed": 15,
+                        "experience": 0,
+                        "current_level": 0
                     }
                 }
             },
@@ -60,10 +64,14 @@ export default class extends Phaser.State {
                     "group": "player_units",
                     "frame": 10,
                     "stats": {
-                        "attack": 20,
+                        "attack": 5,
+                        "magic_attack": 20,
                         "defense": 2,
                         "health": 100,
-                        "speed": 10
+                        "mana": 100,
+                        "speed": 10,
+                        "experience": 0,
+                        "current_level": 0
                     }
                 }
             },
@@ -76,9 +84,13 @@ export default class extends Phaser.State {
                     "frame": 10,
                     "stats": {
                         "attack": 10,
+                        "magic_attack": 10,
                         "defense": 3,
                         "health": 100,
-                        "speed": 20
+                        "mana": 100,
+                        "speed": 20,
+                        "experience": 0,
+                        "current_level": 0
                     }
                 }
             }

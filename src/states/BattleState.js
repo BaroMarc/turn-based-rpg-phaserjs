@@ -8,6 +8,9 @@ import PlayerMenuItem from '../prefabs/hud/PlayerMenuItem';
 import EnemyMenuItem from '../prefabs/hud/EnemyMenuItem';
 import Menu from '../prefabs/hud/Menu';
 import AttackMenuItem from '../prefabs/hud/AttackMenuItem';
+import MagicAttackMenuItem from '../prefabs/hud/MagicAttackMenuItem';
+import InventoryMenuItem from '../prefabs/hud/InventoryMenuItem';
+import Inventory from '../prefabs/items/Inventory';
 
 import forIn from 'lodash/forIn';
 import map from 'lodash/map';
@@ -25,7 +28,8 @@ export default class extends Phaser.State {
             background: TilePrefab,
             rectangle: Prefab,
             player_unit: PlayerUnit,
-            enemy_unit: EnemyUnit
+            enemy_unit: EnemyUnit,
+            inventory: Inventory
         };
         
         this.TEXT_STYLE = {font: '14px Arial', fill: '#FFFFFF'};
@@ -34,12 +38,19 @@ export default class extends Phaser.State {
     init(levelData, extraParameters) {
 
         this.levelData = levelData;
+        this.encounter = extraParameters.encounter;
         this.enemyData = extraParameters.enemyData;
         this.partyData = extraParameters.partyData;
+        this.inventory = extraParameters.inventory;
         
         this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         this.scale.pageAlignHorizontally = true;
         this.scale.pageAlignVertically = true;
+    }
+
+    preload() {
+
+        this.load.text("experience_table", "assets/levels/experience_table.json");
     }
      
     create() {
@@ -59,12 +70,19 @@ export default class extends Phaser.State {
                 this.createPrefab(prefabName, this.levelData.prefabs[prefabName]);
             }
         }
+
+        // if there is no inventory from WorldState, create an empty one
+        if (this.inventory) {
+            this.prefabs.inventory = this.inventory;
+        } else {
+            this.prefabs.inventory = new Inventory(this, "inventory", {x: 0, y: 0}, {group: "items"});
+        }
         
         // create enemy units
-        for (let enemyUnitName in this.enemyData) {
-            if (this.enemyData.hasOwnProperty(enemyUnitName)) {
+        for (let enemyUnitName in this.encounter.enemy_data) {
+            if (this.encounter.enemy_data.hasOwnProperty(enemyUnitName)) {
                 // create enemy units
-                this.createPrefab(enemyUnitName, this.enemyData[enemyUnitName]);
+                this.createPrefab(enemyUnitName, this.encounter.enemy_data[enemyUnitName]);
             }
         }
         
@@ -75,6 +93,9 @@ export default class extends Phaser.State {
                 this.createPrefab(playerUnitName, this.partyData[playerUnitName]);
             }
         }
+
+        // save experience table
+        this.experienceTable = JSON.parse(this.game.cache.getText("experience_table"));
         
         this.initHud();
         
@@ -113,6 +134,9 @@ export default class extends Phaser.State {
         
         // show enemy units
         this.showUnits('enemy_units', {x: 10, y: 210}, EnemyMenuItem);
+
+        // create items menu
+        this.prefabs.inventory.createMenu({x: 106, y: 210});
     }
 
     showUnits(groupName, position, menuItemClass) {
@@ -142,7 +166,9 @@ export default class extends Phaser.State {
         const self = this;
 
         // available actions
-        const actions = [{text: 'Attack', class: AttackMenuItem}];
+        const actions = [{text: "Attack", class: AttackMenuItem},
+               {text: "Magic", class: MagicAttackMenuItem},
+               {text: "Item", class: InventoryMenuItem}];
 
         // create a menu item for each action
         const menuItems = map(actions, (action, actionIndex) => {
@@ -192,12 +218,30 @@ export default class extends Phaser.State {
     };
 
     endBattle() {
-
-        // save current party health
-        this.groups.player_units.forEach(function (unit) {
-            this.partyData[unit.name].properties.stats = unit.stats;
+        
+        // receive battle reward
+        const xp = this.encounter.reward.experience;
+        this.groups.player_units.forEach(function (playerUnit) {
+            // receive experience from enemy
+            playerUnit.receiveExperience(xp / this.groups.player_units.children.length);
+            // save current party stats
+            this.partyData[playerUnit.name].properties.stats = playerUnit.stats;
         }, this);
+        
+        
+        this.encounter.reward.items.forEach(function (item) {
+            this.prefabs.inventory.collectItem(item);
+        }, this);
+        
         // go back to WorldState with the current party data
-        this.game.state.start("BootState", true, false, "assets/levels/level1.json", "WorldState", {partyData: this.partyData});
+        this.game.state.start("BootState",
+            true,
+            false,
+            "assets/levels/level1.json",
+            "WorldState",
+            {
+                partyData: this.partyData,
+                inventory: this.prefabs.inventory
+            });
     };
 }

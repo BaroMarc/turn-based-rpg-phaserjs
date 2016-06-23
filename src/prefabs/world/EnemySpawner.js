@@ -26,9 +26,9 @@ export default class extends Prefab {
                 const enemyEncounter = this.gameState.levelData.enemy_encounters[encounterIndex];
                 if (spawnChance <= enemyEncounter.probability) {
                     // save current player position for later
-                    this.gameState.player_position = this.gameState.prefabs.player.position;
+                    this.gameState.playerPosition = this.gameState.prefabs.player.position;
                     // call battle state
-                    this.gameState.game.state.start("BootState", false, false, "assets/levels/battle.json", "BattleState", {enemyData: enemyEncounter.enemy_data, partyData: this.gameState.partyData});
+                    this.gameState.game.state.start("BootState", false, false, "assets/levels/battle.json", "BattleState", {encounter: enemyEncounter, partyData: this.gameState.partyData});
                     break;
                 }
             }

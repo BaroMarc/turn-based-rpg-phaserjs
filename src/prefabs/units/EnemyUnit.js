@@ -1,4 +1,5 @@
 import Unit from './Unit';
+import PhysicalAttack from './PhysicalAttack';
 
 export default class extends Unit {
 
@@ -9,6 +10,14 @@ export default class extends Unit {
         this.anchor.setTo(0.5);
         
         this.scale.setTo(-1, 1);
+
+        this.attack = new PhysicalAttack(this.gameState,
+            `${this.name}_attack`,
+            {x: 0, y: 0},
+            {
+                group: "attacks",
+                ownerName: this.name
+            });
     }
 
     act() {
@@ -17,7 +26,7 @@ export default class extends Unit {
         const targetIndex = this.gameState.rnd.between(0, this.gameState.groups.player_units.countLiving() - 1);
         const target = this.gameState.groups.player_units.children[targetIndex];
         
-        this.attack(target);
+        this.attack.hit(target);
     }
 
     kill() {
