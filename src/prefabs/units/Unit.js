@@ -2,6 +2,8 @@ import Prefab from '../Prefab';
 
 import ActionMessage from '../hud/ActionMessage';
 
+import clone from 'lodash/clone';
+
 export default class extends Prefab {
 
     constructor(gameState, name, position, properties) {
@@ -10,7 +12,7 @@ export default class extends Prefab {
         
         this.anchor.setTo(0.5);
         
-        this.stats = properties.stats;
+        this.stats = clone(properties.stats);
         
         this.attackedAnimation = this.gameState.game.add.tween(this);
         this.attackedAnimation.to({tint: 0xFF0000}, 200);
